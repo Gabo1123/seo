@@ -1,31 +1,27 @@
 import streamlit as st
 from googlesearch import search
-from bs4 import BeautifulSoup
-import requests
 import re
 
-st.title('Extractor de preguntas relacionadas de Google SERP')
-keyword = st.text_input('Introduce una palabra clave:', '')
-
-def get_related_questions(query):
+# Función para extraer preguntas de los resultados de búsqueda
+def extract_questions(query, num_results=20):
     questions = []
-    query = query + " intitle:inurl:es.answers.yahoo.com"
-    for j in search(query, num_results=20, lang='es'):
-        try:
-            page = requests.get(j)
-            soup = BeautifulSoup(page.content, 'html.parser')
-            question = soup.find('title').get_text(strip=True)
-            question = re.sub(' \| Yahoo Respuestas$', '', question)
-            questions.append(question)
-        except Exception as e:
-            print("Error:", e)
+    for j in search(query, num_results=num_results):
+        title = j["title"]
+        if re.search("(?i)(cómo|cuándo|dónde|por qué|para qué|cuál|quiénes|qué)", title):
+            questions.append(title)
     return questions
 
+# Aplicación Streamlit
+st.title("Extractor de Preguntas de Google SERPs")
+keyword = st.text_input("Ingresa la palabra clave:")
+num_results = st.number_input("Número de resultados a considerar (máx. 100):", min_value=20, max_value=100, value=20)
+
 if keyword:
-    questions = get_related_questions(keyword)
+    query = f"{keyword} intitle:(cómo OR cuándo OR dónde OR por qué OR para qué OR cuál OR quiénes OR qué)"
+    questions = extract_questions(query, num_results)
     if questions:
-        st.write('Preguntas relacionadas encontradas:')
-        for i, question in enumerate(questions, 1):
-            st.write(f'{i}. {question}')
+        st.header("Preguntas encontradas:")
+        for question in questions:
+            st.write(question)
     else:
-        st.write('No se encontraron preguntas relacionadas.')
+        st.warning("No se encontraron preguntas relacionadas con la palabra clave.")
