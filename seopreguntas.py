@@ -1,31 +1,31 @@
 import streamlit as st
 from googlesearch import search
+from bs4 import BeautifulSoup
+import requests
+import re
 
-# Función para buscar preguntas en las SERPs de Google
-def get_questions(keyword, num_results=20):
-    query = f"intitle:preguntas {keyword} site:answers.yahoo.com"
-    results = search(query, num_results=num_results)
-    return results
+st.title('Extractor de preguntas relacionadas de Google SERP')
+keyword = st.text_input('Introduce una palabra clave:', '')
 
-# Configuración de la página de Streamlit
-st.set_page_config(page_title="Extractor de Preguntas", layout="wide")
+def get_related_questions(query):
+    questions = []
+    query = query + " intitle:inurl:es.answers.yahoo.com"
+    for j in search(query, num_results=20, lang='es'):
+        try:
+            page = requests.get(j)
+            soup = BeautifulSoup(page.content, 'html.parser')
+            question = soup.find('title').get_text(strip=True)
+            question = re.sub(' \| Yahoo Respuestas$', '', question)
+            questions.append(question)
+        except Exception as e:
+            print("Error:", e)
+    return questions
 
-st.title("Extractor de Preguntas de Google SERP")
-
-# Entrada de la keyword en la interfaz de Streamlit
-keyword = st.text_input("Introduce la palabra clave:")
-
-# Al hacer clic en el botón "Buscar", se ejecuta la función get_questions()
-if st.button("Buscar"):
-    if keyword:
-        with st.spinner("Buscando preguntas..."):
-            questions = get_questions(keyword)
-
-        if questions:
-            st.header("Preguntas encontradas:")
-            for i, question in enumerate(questions, start=1):
-                st.write(f"{i}. {question}")
-        else:
-            st.warning("No se encontraron preguntas relacionadas con la palabra clave ingresada.")
+if keyword:
+    questions = get_related_questions(keyword)
+    if questions:
+        st.write('Preguntas relacionadas encontradas:')
+        for i, question in enumerate(questions, 1):
+            st.write(f'{i}. {question}')
     else:
-        st.warning("Por favor, ingresa una palabra clave para buscar.")
+        st.write('No se encontraron preguntas relacionadas.')
