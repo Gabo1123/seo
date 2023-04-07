@@ -1,38 +1,37 @@
+import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-import streamlit as st
 
-st.title("Extractor de Preguntas de Bing")
+def get_questions(keyword):
+    # Crear la URL de la búsqueda en Bing
+    url = 'https://www.bing.com/search?q=' + keyword.replace(' ', '+') + '&qs=n&form=QBRE&sp=-1&pq=&sc=0-0&sk=&cvid='
 
-# Entrada de la palabra clave
-keyword = st.text_input("Ingresa la palabra clave:")
+    # Realizar la solicitud HTTP
+    response = requests.get(url)
 
-# Palabras clave de las preguntas
-question_words = ["cómo", "cuándo", "dónde", "por qué", "para qué"]
+    # Analizar el HTML de la página
+    soup = BeautifulSoup(response.text, 'html.parser')
 
-def fetch_search_results(keyword, count=20):
-    url = f"https://www.bing.com/search?q={keyword}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
-    }
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    search_results = soup.find_all("li", class_="b_algo")
+    # Encontrar todos los elementos de pregunta en la página
+    question_elements = soup.find_all('h2', {'class': 'questionText'})
 
-    questions = []
-    for result in search_results:
-        title = result.find("a").text
-        for word in question_words:
-            if word in title.lower():
-                questions.append(title)
-                break
-    return questions[:count]
+    # Crear una lista de preguntas a partir de los elementos encontrados
+    questions = [element.text for element in question_elements]
 
-if keyword:
-    questions = fetch_search_results(keyword)
-    if questions:
-        st.subheader("Preguntas encontradas:")
-        for question in questions:
-            st.write(question)
-    else:
-        st.write("No se encontraron preguntas relacionadas con la palabra clave.")
+    # Limitar la lista de preguntas a los primeros 20 elementos
+    questions = questions[:20]
+
+    # Devolver la lista de preguntas
+    return questions
+
+# Configurar la página de Streamlit
+st.set_page_config(page_title='Bing Questions Extractor', page_icon=':memo:', layout='wide')
+
+# Crear la barra lateral
+st.sidebar.title('Bing Questions Extractor')
+keyword = st.sidebar.text_input('Introduzca una palabra clave', value='Python')
+if st.sidebar.button('Buscar en Bing'):
+    questions = get_questions(keyword)
+    st.write('Estas son las preguntas encontradas en Bing:')
+    for question in questions:
+        st.write('- ' + question)
