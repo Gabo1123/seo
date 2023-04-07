@@ -1,5 +1,7 @@
 import streamlit as st
 from googlesearch import search
+from bs4 import BeautifulSoup
+
 
 st.set_page_config(page_title="SERP Preguntas", layout="wide")
 st.title("Extractor de preguntas de SERPs")
