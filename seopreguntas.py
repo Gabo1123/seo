@@ -1,38 +1,31 @@
 import streamlit as st
 from googlesearch import search
-from bs4 import BeautifulSoup
 
+# Función para buscar preguntas en las SERPs de Google
+def get_questions(keyword, num_results=20):
+    query = f"intitle:preguntas {keyword} site:answers.yahoo.com"
+    results = search(query, num_results=num_results)
+    return results
 
-st.set_page_config(page_title="SERP Preguntas", layout="wide")
-st.title("Extractor de preguntas de SERPs")
+# Configuración de la página de Streamlit
+st.set_page_config(page_title="Extractor de Preguntas", layout="wide")
 
-# Función para extraer las preguntas de las SERPs
-def get_questions(keyword):
-    query = f"preguntas sobre {keyword}"
-    questions = []
+st.title("Extractor de Preguntas de Google SERP")
 
-    for j in search(query, num_results=50):
-        if j.startswith("https://www.quora.com/") or j.startswith("https://espanol.answers.yahoo.com/") or j.startswith("https://www.reddit.com/"):
-            questions.append(j)
-    
-    return questions
+# Entrada de la keyword en la interfaz de Streamlit
+keyword = st.text_input("Introduce la palabra clave:")
 
-# Creación de la interfaz de usuario
-keyword = st.text_input("Introduce una palabra clave:")
-submit_button = st.button("Buscar preguntas")
-
-if submit_button:
+# Al hacer clic en el botón "Buscar", se ejecuta la función get_questions()
+if st.button("Buscar"):
     if keyword:
-        st.write(f"Buscando preguntas relacionadas con '{keyword}' en las SERPs...")
-
-        questions = get_questions(keyword)
+        with st.spinner("Buscando preguntas..."):
+            questions = get_questions(keyword)
 
         if questions:
-            st.write(f"Preguntas encontradas:")
-
-            for question in questions:
-                st.write(question)
+            st.header("Preguntas encontradas:")
+            for i, question in enumerate(questions, start=1):
+                st.write(f"{i}. {question}")
         else:
-            st.write("No se encontraron preguntas relacionadas con la palabra clave.")
+            st.warning("No se encontraron preguntas relacionadas con la palabra clave ingresada.")
     else:
-        st.write("Por favor, introduce una palabra clave.")
+        st.warning("Por favor, ingresa una palabra clave para buscar.")
