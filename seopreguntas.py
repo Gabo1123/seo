@@ -1,37 +1,53 @@
+pip install streamlit pandas
+
 import streamlit as st
-import requests
-from bs4 import BeautifulSoup
+import pandas as pd
 
-def get_questions(keyword):
-    # Crear la URL de la búsqueda en Bing
-    url = 'https://www.bing.com/search?q=' + keyword.replace(' ', '+') + '&qs=n&form=QBRE&sp=-1&pq=&sc=0-0&sk=&cvid='
+st.set_page_config(page_title="Cluster Extractor")
 
-    # Realizar la solicitud HTTP
-    response = requests.get(url)
+# Upload CSV data
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
 
-    # Analizar el HTML de la página
-    soup = BeautifulSoup(response.text, 'html.parser')
+    from sklearn.cluster import KMeans
 
-    # Encontrar todos los elementos de pregunta en la página
-    question_elements = soup.find_all('h2', {'class': 'questionText'})
+# Extract clusters from data
+kmeans = KMeans(n_clusters=3).fit(df)
+df["Cluster"] = kmeans.labels_
 
-    # Crear una lista de preguntas a partir de los elementos encontrados
-    questions = [element.text for element in question_elements]
+# Show clusters in a pandas table
+st.write(df)
 
-    # Limitar la lista de preguntas a los primeros 20 elementos
-    questions = questions[:20]
+# Allow user to download data as CSV
+csv = df.to_csv(index=False)
+b64 = base64.b64encode(csv.encode()).decode()
+href = f'<a href="data:file/csv;base64,{b64}" download="clusters.csv">Download CSV file</a>'
+st.markdown(href, unsafe_allow_html=True)
 
-    # Devolver la lista de preguntas
-    return questions
 
-# Configurar la página de Streamlit
-st.set_page_config(page_title='Bing Questions Extractor', page_icon=':memo:', layout='wide')
+import streamlit as st
+import pandas as pd
+import base64
+from sklearn.cluster import KMeans
 
-# Crear la barra lateral
-st.sidebar.title('Bing Questions Extractor')
-keyword = st.sidebar.text_input('Introduzca una palabra clave', value='Python')
-if st.sidebar.button('Buscar en Bing'):
-    questions = get_questions(keyword)
-    st.write('Estas son las preguntas encontradas en Bing:')
-    for question in questions:
-        st.write('- ' + question)
+st.set_page_config(page_title="Cluster Extractor")
+
+# Upload CSV data
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+
+    # Extract clusters from data
+    kmeans = KMeans(n_clusters=3).fit(df)
+    df["Cluster"] = kmeans.labels_
+
+    # Show clusters in a pandas table
+    st.write(df)
+
+    # Allow user to download data as CSV
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download="clusters.csv">Download CSV file</a>'
+    st.markdown(href, unsafe_allow_html=True)
+
