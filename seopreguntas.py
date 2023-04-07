@@ -1,20 +1,36 @@
-import requests
-from bs4 import BeautifulSoup
+import streamlit as st
+from googlesearch import search
 
-def buscar_preguntas(keyword):
-    # Realizar una búsqueda en Google para la palabra clave
-    url = f"https://www.google.com/search?q={keyword}&hl=en"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-    response = requests.get(url, headers=headers)
+st.set_page_config(page_title="SERP Preguntas", layout="wide")
+st.title("Extractor de preguntas de SERPs")
+
+# Función para extraer las preguntas de las SERPs
+def get_questions(keyword):
+    query = f"preguntas sobre {keyword}"
+    questions = []
+
+    for j in search(query, num_results=50):
+        if j.startswith("https://www.quora.com/") or j.startswith("https://espanol.answers.yahoo.com/") or j.startswith("https://www.reddit.com/"):
+            questions.append(j)
     
-    # Analizar el HTML de la página de resultados
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Encontrar los elementos HTML que contienen preguntas
-    preguntas = []
-    for element in soup.find_all('div', class_='BNeawe s3v9rd AP7Wnd'):
-        if element.text:
-            preguntas.append(element.text)
-    
-    # Devolver una lista de preguntas encontradas
-    return preguntas
+    return questions
+
+# Creación de la interfaz de usuario
+keyword = st.text_input("Introduce una palabra clave:")
+submit_button = st.button("Buscar preguntas")
+
+if submit_button:
+    if keyword:
+        st.write(f"Buscando preguntas relacionadas con '{keyword}' en las SERPs...")
+
+        questions = get_questions(keyword)
+
+        if questions:
+            st.write(f"Preguntas encontradas:")
+
+            for question in questions:
+                st.write(question)
+        else:
+            st.write("No se encontraron preguntas relacionadas con la palabra clave.")
+    else:
+        st.write("Por favor, introduce una palabra clave.")
