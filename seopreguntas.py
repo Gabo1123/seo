@@ -1,12 +1,19 @@
 import streamlit as st
-from googlesearch import search
+from googleapiclient.discovery import build
 import re
+
+# Reemplaza YOUR_API_KEY con tu clave de API
+API_KEY = "YOUR_API_KEY"
+SEARCH_ENGINE_ID = "012345678901234567890:abcdefghijklm"
 
 # Función para extraer preguntas de los resultados de búsqueda
 def extract_questions(query, num_results=20):
     questions = []
-    for j in search(query, num_results=num_results):
-        title = j["title"]
+    service = build("customsearch", "v1", developerKey=API_KEY)
+    response = service.cse().list(q=query, cx=SEARCH_ENGINE_ID, num=num_results).execute()
+    
+    for item in response.get("items", []):
+        title = item["title"]
         if re.search("(?i)(cómo|cuándo|dónde|por qué|para qué|cuál|quiénes|qué)", title):
             questions.append(title)
     return questions
